@@ -37,7 +37,8 @@ Serial.list(function(err, ports) {
 
   ports.forEach(function(port) {
     var reg = new RegExp("usbmode");
-    if (reg.test(port.comName)) {
+    var comReg = new RegExp("COM");
+    if (reg.test(port.comName) || comReg.test(port.comName)) {
       selectedPort = port.comName;
       console.log("find com port name :" + selectedPort);
       return;
@@ -57,7 +58,7 @@ Serial.list(function(err, ports) {
 
     serial.on('data', function(data) {
       //console.log("recieve string: " + data);
-      var reg = new RegExp("s");
+      var reg = new RegExp("[sS]");
       if (reg.test(data)) {
         console.log('receive signal...');
         doAction();
