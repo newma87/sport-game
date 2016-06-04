@@ -1,0 +1,34 @@
+{
+  "name": "sport-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cleanup": "rm -rf ./dist && mkdir -p ./dist/js && mkdir -p ./dist/assets",
+    "assets": "cp ./assets/*.png ./dist/assets",
+    "phaser": "cp ./node_modules/phaser/build/phaser.js ./dist/js",
+    "copy": "cp -R ./src/* ./dist",
+    "serve": "nodemon server.js",
+    "start": "npm run cleanup && npm run assets && npm run phaser && npm run copy && npm run serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lhr0909/flappybird-base.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lhr0909/flappybird-base/issues"
+  },
+  "homepage": "https://github.com/lhr0909/flappybird-base#readme",
+  "dependencies": {
+    "express": "^4.13.4",
+    "phaser": "^2.4.8",
+    "serialport": "^3.1.2",
+    "socket.io": "^1.4.6"
+  },
+  "devDependencies": {
+    "nodemon": "^1.9.2"
+  }
+}
