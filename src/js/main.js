@@ -1,6 +1,8 @@
 var gameObjects = {};
 var gameOver = false;
 
+var socket = io.connect("http://localhost:3000");
+
 function createBird() {
   gameObjects.bird = game.add.sprite(game.width / 4, game.height / 4, 'bird');
   gameObjects.bird.scale.setTo(0.3, 0.3);
@@ -113,6 +115,10 @@ var mainState = {
       });
     } else {
       gameObjects.background.tilePosition.x -= 3;
+
+      socket.on('signal', function(obj) {
+        gameObjects.bird.body.velocity.y = -450;
+      });
 
       if (game.input.activePointer.isDown) {
         gameObjects.bird.body.velocity.y = -450;
