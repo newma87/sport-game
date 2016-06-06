@@ -8,6 +8,9 @@ var PIPE_VELOCITY; // 管子移动速度
 var BIRD_JUMP_VELOCITY = -450; // 点击后小鸟跳起高度
 var BIRD_GRAVITY; // 小鸟的初始重力
 
+var PIPE_GAP = 350;
+var PIPE_SPACE = 550;
+
 // game state
 var GAME_READY = 1;
 var GAME_PLAYING = 2;
@@ -98,7 +101,16 @@ var mainState = {
   },
   create: function() {
     function getNewTop() {
-      return game.rnd.integerInRange(-10, 0) * 20;
+      return game.rnd.integerInRange(20, game.height - 20 - PIPE_GAP);
+    }
+
+    function getTopPipeHeightScale(startPoint) {
+    	return startPoint / 608;
+    }
+
+    function getBottomPipeHeightScale(startPoint) {
+    	var  realH = game.height - startPoint;
+    	return realH / 608;
     }
 
     game.input.addPointer();
@@ -115,19 +127,18 @@ var mainState = {
     for (var i = 0; i < 6; i++) {
       var topPipeY = getNewTop();
       var scale = 0.6;
-      var spaceBetweenPipes = 550;
-      var gapBetweenPipes = 350;
 
       var pipeGroup = game.make.group();
       game.physics.arcade.enable(pipeGroup);
 
       var topPipe = pipeGroup.create(
-        game.width * 3 / 4 + i * spaceBetweenPipes,
+        game.width * 3 / 4 + i * PIPE_SPACE,
         topPipeY,
         'topPipe'
       );
+      topPipe.anchor.setTo(0, 1);
       topPipe.name = 'topPipe' + i;
-      topPipe.scale.setTo(scale, scale);
+      topPipe.scale.setTo(scale, getTopPipeHeightScale(topPipeY));
       game.physics.arcade.enable(topPipe);
 
       topPipe.events.onOutOfBounds.add(function(pipe) {
@@ -145,7 +156,7 @@ var mainState = {
           var pipeIndex = pipe.name[pipe.name.length - 1];
           var outOfBoundsPipeGroup = gameObjects.pipes.children[pipeIndex];
           var lastTopPipe = gameObjects.pipes.children[lastPipeIndex].children[0];
-          var newTopPipeX = lastTopPipe.position.x + spaceBetweenPipes;
+          var newTopPipeX = lastTopPipe.position.x + PIPE_SPACE;
 
           var outOfBoundsPipes = outOfBoundsPipeGroup.children;
           var newTopPipeY = getNewTop();
@@ -154,9 +165,11 @@ var mainState = {
             if (pipe.name.startsWith("top")) {
               pipe.position.x = newTopPipeX;
               pipe.position.y = newTopPipeY;
+              pipe.scale.setTo(scale, getTopPipeHeightScale(newTopPipeY));
             } else {
               pipe.position.x = newTopPipeX - 2;
-              pipe.position.y = newTopPipeY + 608 * scale + gapBetweenPipes
+              pipe.position.y = newTopPipeY + PIPE_GAP;
+              pipe.scale.setTo(scale, getBottomPipeHeightScale(newTopPipeY + PIPE_GAP));
             }
           });
 
@@ -165,12 +178,13 @@ var mainState = {
       });
 
       var bottomPipe = pipeGroup.create(
-        game.width * 3 / 4 - 2 + i * spaceBetweenPipes,
-        topPipeY + 608 * scale + gapBetweenPipes,
+        game.width * 3 / 4 - 2 + i * PIPE_SPACE,
+        topPipeY + PIPE_GAP,
         'bottomPipe'
       );
+      bottomPipe.anchor.setTo(0, 0);
       bottomPipe.name = 'bottomPipe' + i;
-      bottomPipe.scale.setTo(scale, scale);
+      bottomPipe.scale.setTo(scale, getBottomPipeHeightScale(topPipeY + PIPE_GAP));
       game.physics.arcade.enable(bottomPipe);
 
       pipeGroup.setAll('body.immovable', true);
