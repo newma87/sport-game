@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cleanup": "rm -rf ./dist && mkdir -p ./dist/js && mkdir -p ./dist/assets",
-    "assets": "cp ./assets/*.png ./dist/assets",
+    "cleanup": "rm -rf ./dist && mkdir -p ./dist/js && mkdir -p ./dist/assets/fonts/",
+    "assets": "cp ./assets/*.png ./dist/assets && cp ./assets/fonts/* ./dist/assets/fonts/",
     "phaser": "cp ./node_modules/phaser/build/phaser.js ./dist/js",
     "copy": "cp -R ./src/* ./dist",
     "serve": "nodemon server.js",
