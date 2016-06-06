@@ -4,11 +4,11 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "",
-    "cleanup": "rd /S /q .\\dist\\ && md dist && md dist\\assets",
-    "assets": "xcopy .\\assets .\\dist\\assets /S /Y",
-    "phaser": "xcopy .\\node_modules\\phaser\\build\\phaser.js .\\dist\\js\\ /S /Y",
-    "copy": "xcopy .\\src .\\dist /S /Y",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cleanup": "rm -rf ./dist && mkdir -p ./dist/js && mkdir -p ./dist/assets",
+    "assets": "cp ./assets/*.png ./dist/assets",
+    "phaser": "cp ./node_modules/phaser/build/phaser.js ./dist/js",
+    "copy": "cp -R ./src/* ./dist",
     "serve": "nodemon server.js",
     "start": "npm run cleanup && npm run assets && npm run phaser && npm run copy && npm run serve"
   },

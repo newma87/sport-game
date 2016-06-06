@@ -1,7 +1,76 @@
 var gameObjects = {};
-var gameOver = false;
+var gameScore = 0;
+var gameState;
+var countDown = 0;
+var countDownTimer;
+
+var PIPE_VELOCITY; // 管子移动速度
+var BIRD_JUMP_VELOCITY = -450; // 点击后小鸟跳起高度
+var BIRD_GRAVITY; // 小鸟的初始重力
+
+// game state
+var GAME_READY = 1;
+var GAME_PLAYING = 2;
+var GAME_OVER = 3;
+var GAME_END = 4;
+
+function startGame() {
+	gameState = GAME_PLAYING;
+	PIPE_VELOCITY = -180;
+	BIRD_GRAVITY = 780
+	gameObjects.bird.body.gravity.y = BIRD_GRAVITY;
+	gameObjects.pipes.children.forEach(function(group) {
+       	group.setAll('body.velocity.x', PIPE_VELOCITY);
+    });
+    gameObjects.readySprite.destroy();
+    gameObjects.scoreText = game.add.bitmapText(15, 25, 'flappyFont', "score: " + gameScore, 44);
+}
+
+function gameOver() {
+    gameState = GAME_OVER;
+    gameObjects.pipes.children.forEach(function(group) {
+        group.setAll('body.velocity.x', 0);
+    });
+    gameObjects.gameOver = game.add.sprite(game.width / 2, game.height / 2 - 50, 'gameover');
+    gameObjects.gameOver.anchor.setTo(0.5, 1);
+    gameObjects.gameOver.scale.setTo(2.5, 2.5);
+    countDown = 3;
+    gameObjects.countDown = game.add.bitmapText(game.width / 2, game.height / 2 + 80, 'flappyFont', '' + countDown, 120);
+    gameObjects.countDown.anchor.setTo(0.5, 0.5);
+
+    countDownTimer = game.time.events.loop(Phaser.Timer.SECOND, function() {
+    	countDown--;
+    	if (countDown > 0) {
+    		gameObjects.countDown.text = '' + countDown;
+    	} else {
+			gameObjects.countDown.destroy();
+			game.time.events.remove(countDownTimer);
+			gameState = GAME_END;
+    	}
+    }, this);
+}
+
+function onTrigger() {
+	switch (gameState) {
+	case GAME_END:
+		game.state.restart();
+		gameState = GAME_READY;
+		break;
+	case GAME_READY:
+		startGame();
+		break;
+	case GAME_PLAYING:
+		gameObjects.bird.body.velocity.y = BIRD_JUMP_VELOCITY;
+		break;
+	case GAME_OVER:
+		break;
+	}
+}
 
 var socket = io.connect("http://localhost:3000");
+socket.on('signal', function(obj) {
+	onTrigger();
+});
 
 function createBird() {
   gameObjects.bird = game.add.sprite(game.width / 4, game.height / 4, 'bird');
@@ -12,8 +81,8 @@ function createBird() {
 
   game.physics.arcade.enable(gameObjects.bird);
   gameObjects.bird.body.bounce.y = 0.2;
-  gameObjects.bird.body.gravity.y = 1250;
-  gameObjects.bird.body.collideWorldBounds = true;
+  //gameObjects.bird.body.gravity.y = 1250;
+  gameObjects.bird.body.collideWorldBounds = true; 	
 }
 
 var mainState = {
@@ -21,6 +90,9 @@ var mainState = {
     game.load.image('background', 'assets/background.png');
     game.load.image('topPipe', 'assets/top_pipe.png');
     game.load.image('bottomPipe', 'assets/bottom_pipe.png');
+    game.load.image('ready', 'assets/ready.png');
+    game.load.image('gameover', 'assets/gameover.png');
+    game.load.bitmapFont('flappyFont', 'assets/fonts/font.png', 'assets/fonts/font.fnt');
 
     game.load.spritesheet('bird', 'assets/bird.png', 156, 129);
   },
@@ -43,14 +115,14 @@ var mainState = {
     for (var i = 0; i < 6; i++) {
       var topPipeY = getNewTop();
       var scale = 0.6;
-      var spaceBetweenPipes = 250;
-      var gapBetweenPipes = 150;
+      var spaceBetweenPipes = 550;
+      var gapBetweenPipes = 350;
 
       var pipeGroup = game.make.group();
       game.physics.arcade.enable(pipeGroup);
 
       var topPipe = pipeGroup.create(
-        game.width / 2 + i * 250,
+        game.width * 3 / 4 + i * spaceBetweenPipes,
         topPipeY,
         'topPipe'
       );
@@ -59,6 +131,16 @@ var mainState = {
       game.physics.arcade.enable(topPipe);
 
       topPipe.events.onOutOfBounds.add(function(pipe) {
+      	if ((pipe.position.x + (108 * scale)) <  (game.width / 4)) {
+      		gameScore += 1;
+      		gameObjects.scoreText.text = "score: " + gameScore;
+
+      		gameObjects.bird.body.gravity.y = ++BIRD_GRAVITY;
+			gameObjects.pipes.children.forEach(function(group) {
+       			group.setAll('body.velocity.x', --PIPE_VELOCITY);
+    		});
+      	}
+
         if (pipe.position.x < 0) {
           var pipeIndex = pipe.name[pipe.name.length - 1];
           var outOfBoundsPipeGroup = gameObjects.pipes.children[pipeIndex];
@@ -83,7 +165,7 @@ var mainState = {
       });
 
       var bottomPipe = pipeGroup.create(
-        game.width / 2 - 2 + i * spaceBetweenPipes,
+        game.width * 3 / 4 - 2 + i * spaceBetweenPipes,
         topPipeY + 608 * scale + gapBetweenPipes,
         'bottomPipe'
       );
@@ -92,45 +174,40 @@ var mainState = {
       game.physics.arcade.enable(bottomPipe);
 
       pipeGroup.setAll('body.immovable', true);
-      pipeGroup.setAll('body.velocity.x', -250);
       pipeGroup.setAll('checkWorldBounds', true);
-
-      // pipeGroup.events.onOutOfBounds.add(function(pipe) {
-      //   var lastPipe = gameObjects.pipes.children[lastPipeIndex];
-      //   pipe.position.x = lastPipe.position.x + 250;
-      //   pipe.position.y = game.rnd.integerInRange(-10, 0) * 20;
-      //   lastPipeIndex = (lastPipeIndex + 1) % 6;
-      // }. this);
 
       gameObjects.pipes.add(pipeGroup);
     }
 
     createBird();
+
+    gameScore = 0;
+
+    gameObjects.readySprite = game.add.sprite(game.width / 2 - (186 * 2.5) / 2, game.height / 2 - (50 * 2.5) / 2, 'ready');
+    gameObjects.readySprite.scale.setTo(2.5, 2.5);
+    gameState = GAME_READY;
   },
   update: function() {
-    if (gameOver) {
-      console.log("game over");
-      gameObjects.pipes.children.forEach(function(group) {
-        group.setAll('body.velocity.x', 0);
-      });
-    } else {
-      gameObjects.background.tilePosition.x -= 3;
-
-      socket.on('signal', function(obj) {
-        gameObjects.bird.body.velocity.y = -450;
-      });
-
-      if (game.input.activePointer.isDown) {
-        gameObjects.bird.body.velocity.y = -450;
-      }
-
-      for (var i = 0; i < gameObjects.pipes.children.length; i++) {
-        game.physics.arcade.collide(gameObjects.bird, gameObjects.pipes.children[i], function(bird, pipe) {
-          gameOver = true;
-        }, null, this);
-      }
+  	if (game.input.activePointer.isDown) {
+     	onTrigger();
     }
 
+  	 switch (gameState) {
+  	 case GAME_END:
+  	 	break;
+  	 case GAME_READY:
+  	 	break;
+  	 case GAME_PLAYING:
+  	 	gameObjects.background.tilePosition.x -= 3;
+      	for (var i = 0; i < gameObjects.pipes.children.length; i++) {
+       		game.physics.arcade.collide(gameObjects.bird, gameObjects.pipes.children[i], function(bird, pipe) {
+          		gameOver();
+        	}, null, this);
+     	}
+  	 	break;
+  	 case GAME_OVER:
+  	 	break;
+  	 }
 
   },
   render: function() {
