@@ -8,8 +8,8 @@ var PIPE_VELOCITY; // 管子移动速度
 var BIRD_JUMP_VELOCITY = -450; // 点击后小鸟跳起高度
 var BIRD_GRAVITY; // 小鸟的初始重力
 
-var PIPE_GAP = 350;
-var PIPE_SPACE = 550;
+var PIPE_GAP = 500;
+var PIPE_SPACE = 700;
 
 // game state
 var GAME_READY = 1;
@@ -19,8 +19,10 @@ var GAME_END = 4;
 
 function startGame() {
 	gameState = GAME_PLAYING;
+	PIPE_GAP = 500;
+	PIPE_SPACE = 700;
 	PIPE_VELOCITY = -180;
-	BIRD_GRAVITY = 780
+	BIRD_GRAVITY = 780;
 	gameObjects.bird.body.gravity.y = BIRD_GRAVITY;
 	gameObjects.pipes.children.forEach(function(group) {
        	group.setAll('body.velocity.x', PIPE_VELOCITY);
@@ -150,6 +152,23 @@ var mainState = {
 			gameObjects.pipes.children.forEach(function(group) {
        			group.setAll('body.velocity.x', --PIPE_VELOCITY);
     		});
+
+
+
+    		if(gameScore>=6){
+    			if ((gameScore % 5) == 0) {
+    				PIPE_GAP = PIPE_GAP-30;
+	    			if (PIPE_GAP<=350) {
+	    				PIPE_GAP=350;
+	    			}
+					PIPE_SPACE = PIPE_SPACE-30;
+					if(PIPE_SPACE<=500){
+	    				PIPE_SPACE=500;
+	    			}
+    			}
+				
+			}
+
       	}
 
         if (pipe.position.x < 0) {
